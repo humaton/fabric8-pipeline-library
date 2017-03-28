@@ -26,7 +26,7 @@ def call(body) {
             sh 'mvn io.github.stackinfo:stackinfo-maven-plugin:0.2:prepare'
             bayesianUrl = 'http://api-bayesian.dev.rdu2c.fabric8.io/' //flow.getServiceURL('bayesian-link') //
             //sh 'curl -v -i http://bayesian-link:80'
-            def response = bayesianAnalysis url: 'http://bayesian-link:80'
+            def response = bayesianAnalysis url: 'http://api-bayesian.dev.rdu2c.fabric8.io/'
             if (response.success) {
                 def utils = new io.fabric8.Utils()
                 def buildName = utils.getValidOpenShiftBuildName()
