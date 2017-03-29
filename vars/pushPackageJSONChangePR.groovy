@@ -34,7 +34,7 @@ def call(body) {
         def json = readFile file: "${repo}/${packageJSON}"
         if (shouldWeUpdate(json, config.propertyName, config.version)) {
             // use SED to avoid formatting issues when using JSONBuilder
-            updateVersion("${repo}/${packageJSON}", config.propertyName, config.version)
+            flow.updatePackageJSONVersion("${repo}/${packageJSON}", config.propertyName, config.version)
 
             container(name: containerName) {
 
@@ -45,7 +45,7 @@ def call(body) {
                 sh "git config --global user.email fabric8-admin@googlegroups.com"
                 sh "git config --global user.name fabric8-release"
 
-                def message = "fix: update package.json ${config.propertyName} to ${config.version}"
+                def message = "fix(version): update package.json ${config.propertyName} to ${config.version}"
                 sh "cd ${repo} && git add ${packageJSON}"
 
                 sh "cd ${repo} && git commit -m \"${message}\""
@@ -55,20 +55,17 @@ def call(body) {
                 id = flow.createPullRequest("${message}", "${project}", "versionUpdate${uid}")
             }
 
-            waitUntilPullRequestMerged {
-                name = project
-                prId = id
-            }
+            // I dont think we need to wait at the moment, lets just raise all teh PRs
+            // waitUntilPullRequestMerged {
+            //     name = project
+            //     prId = id
+            // }
 
         } else {
             echo "Skippping ${project} as ${config.propertyName} already on version ${config.version}"
         }
 
     }
-}
-
-def updateVersion(f, p, v) {
-    sh "sed -i -r 's/\"${p}\": \"[0-9][0-9]{0,2}.[0-9][0-9]{0,2}(.[0-9][0-9]{0,2})?(.[0-9][0-9]{0,2})?\"/\"${p}\": \"${v}\"/g' ${f}"
 }
 
 @NonCPS

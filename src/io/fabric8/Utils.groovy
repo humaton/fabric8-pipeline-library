@@ -11,6 +11,8 @@ import io.fabric8.openshift.api.model.NamedTagEventList
 import io.fabric8.openshift.api.model.TagEvent
 import io.fabric8.openshift.client.DefaultOpenShiftClient
 import io.fabric8.openshift.client.OpenShiftClient
+import io.fabric8.Fabric8Commands
+
 //
 //IMAGE_STREAM_TAG_RETRIES = 15;
 //IMAGE_STREAM_TAG_RETRY_TIMEOUT_IN_MILLIS = 1000;
@@ -197,4 +199,39 @@ def getValidOpenShiftBuildName(){
   }
 }
 
+def replacePackageVersions(packageLocation, replaceVersions){
+  for(int i = 0; i < replaceVersions.size(); i++){
+
+    def pair = replaceVersions[i]
+    def property = pair[0]
+    def version = pair[1]
+
+    sh "sed -i -r 's/\"${property}\": \"[0-9][0-9]{0,2}.[0-9][0-9]{0,2}(.[0-9][0-9]{0,2})?(.[0-9][0-9]{0,2})?(-development)?\"/\"${property}\": \"${version}\"/g' ${packageLocation}"
+        
+  }
+}
+
+
+def hasOpenPR(project){
+    def flow = new Fabric8Commands()
+    def githubToken = flow.getGitHubToken()
+    def apiUrl = new URL("https://api.github.com/repos/${project}/pulls")
+    def rs = restGetURL{
+        authString = githubToken
+        url = apiUrl
+    }
+
+    if (rs == null || rs.isEmpty()){
+      return false
+    }
+    for(int i = 0; i < rs.size(); i++){
+      def pr = rs[i]
+      
+      if (pr.state == 'open' && pr.title == 'fix(version): update property versions'){
+          return true
+      }
+    }
+
+    return false
+}
 return this
